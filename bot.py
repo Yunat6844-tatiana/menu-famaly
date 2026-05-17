@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import os
 import time
@@ -9,7 +10,23 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(path, override=False):
+        if not path.exists():
+            return False
+
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip("\"'")
+            if key and (override or key not in os.environ):
+                os.environ[key] = value
+        return True
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -182,6 +199,10 @@ def set_bot_commands(token):
     api_request(token, "setMyCommands", {"commands": json.dumps(commands, ensure_ascii=False)})
 
 
+def use_polling_updates(token):
+    api_request(token, "deleteWebhook", {"drop_pending_updates": False})
+
+
 def day_message(menu, date):
     key = WEEKDAY_KEYS[date.weekday()]
     return format_day(menu["week_menu"][key])
@@ -260,7 +281,7 @@ def send_daily_if_needed(token, menu, state):
     save_json(STATE_PATH, state)
 
 
-def run_bot():
+def load_runtime():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise SystemExit("Set TELEGRAM_BOT_TOKEN before starting the bot.")
@@ -268,30 +289,44 @@ def run_bot():
     menu = load_json(DATA_PATH, {})
     state = load_json(STATE_PATH, {"offset": 0, "chat_ids": []})
     set_bot_commands(token)
+    use_polling_updates(token)
+    return token, menu, state
 
+
+def process_updates_once(token, menu, state, timeout=25):
+    send_daily_if_needed(token, menu, state)
+    updates = api_request(token, "getUpdates", {
+        "offset": state.get("offset", 0),
+        "timeout": timeout,
+        "allowed_updates": json.dumps(["message"])
+    })
+
+    for update in updates:
+        state["offset"] = update["update_id"] + 1
+        message = update.get("message") or {}
+        chat = message.get("chat") or {}
+        text = message.get("text", "")
+        chat_id = chat.get("id")
+
+        if not chat_id or not text.startswith("/"):
+            continue
+
+        response, keyboard = handle_command(token, chat_id, text, menu, state)
+        send_message(token, chat_id, response, keyboard)
+
+    save_json(STATE_PATH, state)
+
+
+def run_once():
+    token, menu, state = load_runtime()
+    process_updates_once(token, menu, state, timeout=0)
+
+
+def run_bot():
+    token, menu, state = load_runtime()
     while True:
         try:
-            send_daily_if_needed(token, menu, state)
-            updates = api_request(token, "getUpdates", {
-                "offset": state.get("offset", 0),
-                "timeout": 25,
-                "allowed_updates": json.dumps(["message"])
-            })
-
-            for update in updates:
-                state["offset"] = update["update_id"] + 1
-                message = update.get("message") or {}
-                chat = message.get("chat") or {}
-                text = message.get("text", "")
-                chat_id = chat.get("id")
-
-                if not chat_id or not text.startswith("/"):
-                    continue
-
-                response, keyboard = handle_command(token, chat_id, text, menu, state)
-                send_message(token, chat_id, response, keyboard)
-
-            save_json(STATE_PATH, state)
+            process_updates_once(token, menu, state)
         except (urllib.error.URLError, TimeoutError) as error:
             print(f"Network error: {error}. Retrying in 10 seconds.", flush=True)
             time.sleep(10)
@@ -301,4 +336,15 @@ def run_bot():
 
 
 if __name__ == "__main__":
-    run_bot()
+    parser = argparse.ArgumentParser(description="Telegram menu bot")
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="process pending Telegram updates once and exit"
+    )
+    args = parser.parse_args()
+
+    if args.once:
+        run_once()
+    else:
+        run_bot()

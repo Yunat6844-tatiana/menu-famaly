@@ -4,7 +4,6 @@ __pycache__/
 .tools/
 *.pyc
 
-bot_state.json
 bot.log
 bot.pid
 .DS_Store

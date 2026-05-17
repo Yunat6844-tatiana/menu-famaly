@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Семейное меню</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f2ea;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #66727f;
+      --line: #ded7cb;
+      --accent: #23685b;
+      --accent-2: #b35c35;
+      --soft: #e9f2ef;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: #fbfaf7;
+      padding: 22px 16px;
+    }
+
+    .brand {
+      margin-bottom: 24px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .brand p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--ink);
+      padding: 11px 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .nav button:hover {
+      background: #f0ece3;
+    }
+
+    .nav button.active {
+      background: var(--soft);
+      border-color: #c4d8d1;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .main {
+      padding: 22px;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+    }
+
+    .date {
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .content {
+      display: grid;
+      gap: 14px;
+    }
+
+    .section,
+    .chat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 1px 2px rgba(31, 41, 51, 0.04);
+    }
+
+    .day-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .day-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .day-card h3,
+    .section h3 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    .meal {
+      margin: 10px 0;
+      line-height: 1.45;
+    }
+
+    .meal strong {
+      color: var(--accent);
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee8dd;
+      line-height: 1.35;
+    }
+
+    .list li:last-child {
+      border-bottom: 0;
+    }
+
+    .price {
+      color: var(--accent-2);
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .total {
+      margin-top: 16px;
+      color: var(--accent-2);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .recipe-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee8dd;
+    }
+
+    .recipe-row:last-child {
+      border-bottom: 0;
+    }
+
+    .link-button {
+      border: 1px solid #c8d7d2;
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--accent);
+      padding: 8px 10px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .chat-log {
+      height: 360px;
+      overflow: auto;
+      background: #fbfaf7;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+
+    .chat-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .chat-form input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #fff;
+    }
+
+    .primary {
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 11px 14px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .topbar {
+        display: block;
+      }
+
+      .recipe-row,
+      .chat-form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>Семейное меню</h1>
+        <p>Локальное приложение на контексте Telegram-бота.</p>
+      </div>
+      <nav class="nav" id="nav"></nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h2 id="viewTitle">Сегодня</h2>
+          <div class="date" id="dateLine"></div>
+        </div>
+      </div>
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+
+  <script src="data/menu_data.js"></script>
+  <script>
+    const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+    const dayLabels = {
+      monday: "Понедельник",
+      tuesday: "Вторник",
+      wednesday: "Среда",
+      thursday: "Четверг",
+      friday: "Пятница",
+      saturday: "Суббота",
+      sunday: "Воскресенье"
+    };
+    const commands = ["/today", "/tomorrow", "/week", "/shopping", "/pantry", "/help"];
+    const views = [
+      ["today", "Сегодня"],
+      ["tomorrow", "Завтра"],
+      ["week", "Неделя"],
+      ["shopping", "Покупки"],
+      ["pantry", "Дома"],
+      ["recipes", "Рецепты"],
+      ["chat", "Чат"]
+    ];
+
+    let activeView = "today";
+
+    function euroRange(value) {
+      const parts = String(value).replace(",", ".").replace("~", "").split("-");
+      const low = Number.parseFloat(parts[0]) || 0;
+      const high = Number.parseFloat(parts[1] || parts[0]) || low;
+      return [low, high];
+    }
+
+    function currentDayOffset(offset) {
+      const date = new Date();
+      date.setDate(date.getDate() + offset);
+      const mondayBasedIndex = (date.getDay() + 6) % 7;
+      return days[mondayBasedIndex];
+    }
+
+    function dayCard(dayKey) {
+      const day = window.MENU_DATA.week_menu[dayKey];
+      return `
+        <article class="day-card">
+          <h3>${day.title || dayLabels[dayKey]}</h3>
+          <p class="meal"><strong>Обед:</strong> ${day.lunch}</p>
+          <p class="meal"><strong>Ужин:</strong> ${day.dinner}</p>
+        </article>
+      `;
+    }
+
+    function renderToday(offset = 0) {
+      const key = currentDayOffset(offset);
+      content.innerHTML = `<div class="day-grid">${dayCard(key)}</div>`;
+    }
+
+    function renderWeek() {
+      content.innerHTML = `<div class="day-grid">${days.map(dayCard).join("")}</div>`;
+    }
+
+    function renderShopping() {
+      let lowTotal = 0;
+      let highTotal = 0;
+      const items = window.MENU_DATA.shopping_list.map((item) => {
+        const [low, high] = euroRange(item.estimated_price_eur);
+        lowTotal += low;
+        highTotal += high;
+        return `<li><span>${item.name}<br><small>${item.quantity}</small></span><span class="price">${item.estimated_price_eur} €</span></li>`;
+      }).join("");
+      content.innerHTML = `
+        <section class="section">
+          <h3>Список продуктов на неделю</h3>
+          <ul class="list">${items}</ul>
+          <div class="total">Итого ориентировочно: ${Math.round(lowTotal)}-${Math.round(highTotal)} €</div>
+          <p class="date">Магазины: Pingo Doce, Mercadona, Auchan. Берите аналоги private label, если они дешевле.</p>
+        </section>
+      `;
+    }
+
+    function renderPantry() {
+      const items = window.MENU_DATA.pantry_items.map((item) => `<li><span>${item}</span></li>`).join("");
+      content.innerHTML = `<section class="section"><h3>Уже есть дома</h3><ul class="list">${items}</ul></section>`;
+    }
+
+    function renderRecipes() {
+      const links = window.MENU_DATA.dish_links || {};
+      const rows = days.map((key) => {
+        const day = window.MENU_DATA.week_menu[key];
+        return [day.lunch, day.dinner].map((dish) => {
+          const dishLinks = links[dish] || {};
+          return `
+            <div class="recipe-row">
+              <div><strong>${day.title}</strong><br>${dish}</div>
+              ${dishLinks.recipe_url ? `<a class="link-button" href="${dishLinks.recipe_url}" target="_blank" rel="noreferrer">Рецепт</a>` : "<span></span>"}
+              ${dishLinks.ingredients_url ? `<a class="link-button" href="${dishLinks.ingredients_url}" target="_blank" rel="noreferrer">Продукты</a>` : "<span></span>"}
+            </div>
+          `;
+        }).join("");
+      }).join("");
+      content.innerHTML = `<section class="section"><h3>Рецепты и продукты</h3>${rows}</section>`;
+    }
+
+    function commandResponse(command) {
+      const normalized = command.trim().split(/\s+/)[0].toLowerCase();
+      if (normalized === "/start" || normalized === "/today") {
+        const day = window.MENU_DATA.week_menu[currentDayOffset(0)];
+        return `${day.title}\nОбед: ${day.lunch}\nУжин: ${day.dinner}`;
+      }
+      if (normalized === "/tomorrow") {
+        const day = window.MENU_DATA.week_menu[currentDayOffset(1)];
+        return `${day.title}\nОбед: ${day.lunch}\nУжин: ${day.dinner}`;
+      }
+      if (normalized === "/week") {
+        return days.map((key) => {
+          const day = window.MENU_DATA.week_menu[key];
+          return `${day.title}\nОбед: ${day.lunch}\nУжин: ${day.dinner}`;
+        }).join("\n\n");
+      }
+      if (normalized === "/shopping") {
+        return window.MENU_DATA.shopping_list.map((item) => `- ${item.name}: ${item.quantity}, примерно ${item.estimated_price_eur} €`).join("\n");
+      }
+      if (normalized === "/pantry") {
+        return window.MENU_DATA.pantry_items.map((item) => `- ${item}`).join("\n");
+      }
+      if (normalized === "/help") {
+        return commands.join("\n");
+      }
+      return `Не знаю такую команду.\n\n${commands.join("\n")}`;
+    }
+
+    function renderChat() {
+      content.innerHTML = `
+        <section class="chat">
+          <div class="chat-log" id="chatLog">Бот: ${commandResponse("/help")}\n\n</div>
+          <form class="chat-form" id="chatForm">
+            <input id="chatInput" value="/today" aria-label="Команда">
+            <button class="primary" type="submit">Отправить</button>
+          </form>
+        </section>
+      `;
+      document.getElementById("chatForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = document.getElementById("chatInput");
+        const log = document.getElementById("chatLog");
+        const command = input.value.trim() || "/help";
+        log.textContent += `Вы: ${command}\nБот: ${commandResponse(command)}\n\n`;
+        log.scrollTop = log.scrollHeight;
+        input.value = "";
+      });
+    }
+
+    function render() {
+      const title = views.find(([key]) => key === activeView)[1];
+      viewTitle.textContent = title;
+      dateLine.textContent = new Intl.DateTimeFormat("ru-RU", {
+        dateStyle: "full",
+        timeStyle: "short"
+      }).format(new Date());
+
+      for (const button of nav.querySelectorAll("button")) {
+        button.classList.toggle("active", button.dataset.view === activeView);
+      }
+
+      if (activeView === "today") renderToday(0);
+      if (activeView === "tomorrow") renderToday(1);
+      if (activeView === "week") renderWeek();
+      if (activeView === "shopping") renderShopping();
+      if (activeView === "pantry") renderPantry();
+      if (activeView === "recipes") renderRecipes();
+      if (activeView === "chat") renderChat();
+    }
+
+    const nav = document.getElementById("nav");
+    const content = document.getElementById("content");
+    const viewTitle = document.getElementById("viewTitle");
+    const dateLine = document.getElementById("dateLine");
+
+    nav.innerHTML = views.map(([key, label]) => `<button type="button" data-view="${key}">${label}</button>`).join("");
+    nav.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      activeView = button.dataset.view;
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>
