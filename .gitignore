@@ -1,0 +1,10 @@
+.env
+__pycache__/
+.venv/
+.tools/
+*.pyc
+
+bot_state.json
+bot.log
+bot.pid
+.DS_Store
