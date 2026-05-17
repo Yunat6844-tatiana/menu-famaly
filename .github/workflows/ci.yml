@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate bot project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Check Python syntax
+        run: python -m py_compile bot.py
+
+      - name: Validate JSON data
+        run: |
+          python -m json.tool data/menu.json > /dev/null
+          python -m json.tool data/menu_rules.json > /dev/null
+
+      - name: Import bot module
+        env:
+          TELEGRAM_BOT_TOKEN: test-token
+          BOT_TIMEZONE: Europe/Lisbon
+        run: python -c "import bot; print('bot import ok')"
